@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/home_view.dart';
+
+import 'home_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,8 +16,8 @@ class MyApp extends StatelessWidget {
       title: 'Google Maps demo',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
       ),
+      debugShowCheckedModeBanner: false,
       home: const HomeView()
     );
   }
