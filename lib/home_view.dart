@@ -81,8 +81,9 @@ class _HomeViewState extends State<HomeView> {
             polygonId: PolygonId('custom-polygon'),
             points: <LatLng>[
               LatLng(24.248005761996964, 89.92045372724533),
+              LatLng(24.244885476089948, 89.92330022156239),
+              LatLng(24.24123286823403, 89.92040444165468),
               LatLng(24.240005761996964, 89.91045372724533),
-              LatLng(24.24123286823403, 89.92040444165468)
             ],
             fillColor: Colors.green,
             strokeWidth: 20,
