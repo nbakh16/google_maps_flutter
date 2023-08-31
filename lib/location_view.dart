@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:location/location.dart';
 
@@ -10,29 +12,46 @@ class LocationView extends StatefulWidget {
 
 class _LocationViewState extends State<LocationView> {
 
+  LocationData? myCurrentLocation;
+  StreamSubscription? _locationSubscription;
+
   @override
   void initState() {
-    // getMyLocation();
-    listenToMyLocation();
+    locationInitialSettings();
     super.initState();
   }
 
-  LocationData? myLocation;
-  void getMyLocation() async {
-    myLocation = await Location.instance.getLocation();
+  void locationInitialSettings() {
+    Location.instance.requestPermission();
+
+    Location.instance.hasPermission().then((value) {
+      if(value == PermissionStatus.granted) {
+        Location.instance.changeSettings(
+          accuracy: LocationAccuracy.low,
+          distanceFilter: 25,
+          interval: 50000
+        );
+      }
+    });
+  }
+
+  void getMyCurrentLocation() async {
+    myCurrentLocation = await Location.instance.getLocation();
     setState(() {});
   }
 
   void listenToMyLocation() {
-    Location.instance.onLocationChanged.listen((location) {
-      if(location != myLocation) {
-        myLocation = location;
-        setState(() {
-
-        });
+    _locationSubscription = Location.instance.onLocationChanged.listen((location) {
+      if(location != myCurrentLocation) {
+        myCurrentLocation = location;
+        setState(() {});
         print('listening to location: $location');
       }
     });
+  }
+
+  void stopListenToMyLocation() {
+    _locationSubscription?.cancel();
   }
 
   @override
@@ -43,12 +62,28 @@ class _LocationViewState extends State<LocationView> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text('${myLocation?.latitude} - ${myLocation?.longitude}', style: TextStyle(fontWeight: FontWeight.bold),),
-            Text('accuracy: ${myLocation?.accuracy}'),
-            Text('altitude: ${myLocation?.altitude}'),
+            Text(
+              '${myCurrentLocation?.latitude} - ${myCurrentLocation?.longitude}',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            Text('accuracy: ${myCurrentLocation?.accuracy}'),
           ],
         ),
       ),
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: <FloatingActionButton>[
+          FloatingActionButton(onPressed: getMyCurrentLocation, child: const Icon(Icons.my_location),),
+          FloatingActionButton(onPressed: listenToMyLocation, child: const Icon(Icons.location_on),),
+          FloatingActionButton(onPressed: stopListenToMyLocation, child: const Icon(Icons.location_off),),
+        ],
+      ),
     );
+  }
+
+  @override
+  void dispose() {
+    _locationSubscription?.cancel();
+    super.dispose();
   }
 }
