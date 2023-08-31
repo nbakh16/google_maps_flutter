@@ -7,12 +7,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:google_maps_flutter_demo/home_view.dart';
+import 'package:google_maps_flutter_demo/location_view.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const HomeView());
+    await tester.pumpWidget(const LocationView());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
