@@ -1,5 +1,7 @@
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:location/location.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -11,84 +13,81 @@ class HomeView extends StatefulWidget {
 class _HomeViewState extends State<HomeView> {
   late final GoogleMapController _googleMapController;
 
+  final Location _location = Location();
+  LatLng? _currentLocation;
+
+  late Marker _marker;
+  final List<LatLng> _latLngList = [];
+  final Set<Polyline> _polyLineSet = {};
+
+  @override
+  void initState() {
+    listenToCurrentLocation();
+    super.initState();
+  }
+
+  void listenToCurrentLocation() {
+    _location.requestPermission();
+
+    _location.hasPermission().then((value) {
+      if(value == PermissionStatus.granted) {
+        _location.changeSettings(interval: 10000);
+
+        _location.onLocationChanged.listen((LocationData locationData) {
+          _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
+
+          _updateMarker();
+          _updatePolyline();
+          setState(() {});
+        });
+      }
+    });
+  }
+
+  void _updateMarker() {
+    _marker = Marker(
+      markerId: const MarkerId('current_location'),
+      position: _currentLocation!,
+      infoWindow: InfoWindow(
+        title: 'My current location',
+        snippet: 'Lat: ${_currentLocation!.latitude}, Lng: ${_currentLocation!.longitude}',
+      ),
+      onTap: () {
+        _googleMapController
+            .showMarkerInfoWindow(const MarkerId('current_location'));
+      },
+    );
+  }
+
+  void _updatePolyline() {
+    _latLngList.add(_currentLocation!);
+    _polyLineSet.add(Polyline(
+      polylineId: const PolylineId('polyline_list'),
+      points: _latLngList,
+      color: Colors.lightGreen,
+      width: 6,
+    ));
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Map'),),
       body: GoogleMap(
-        initialCameraPosition: const CameraPosition(
-          zoom: 15,
-          target: LatLng(24.250151813382207, 89.92231210838047)
-        ),
         onMapCreated: (GoogleMapController controller) {
           _googleMapController = controller;
+          _googleMapController.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
         },
-        onTap: (LatLng? latLng) {
-          print(latLng);
-        },
+        initialCameraPosition: CameraPosition(
+            zoom: 15,
+            target: _currentLocation!
+        ),
+        markers: {_marker},
+        polylines: _polyLineSet,
         myLocationEnabled: true,
         myLocationButtonEnabled: true,
-        markers: <Marker>{
-          Marker(
-            markerId: MarkerId('custom-marker'),
-            position: LatLng(24.248005761996964, 89.92045372724533),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRose),
-            infoWindow: InfoWindow(title: 'Cutom Title', snippet: 'Snippet'),
-            draggable: true,
-
-          ),
-          Marker(
-            markerId: MarkerId('custom-marker-1'),
-            position: LatLng(24.240005761996964, 89.91045372724533),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueViolet),
-            infoWindow: InfoWindow(title: 'Cutom Title', snippet: 'Snippet'),
-            draggable: true,
-
-          ),
-          Marker(
-            markerId: MarkerId('custom-marker-2'),
-            position: LatLng(24.24123286823403, 89.92040444165468),
-            icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
-            infoWindow: InfoWindow(title: 'Cutom Title', snippet: 'Snippet'),
-            draggable: true,
-
-          ),
-        },
-        polylines: <Polyline>{
-          Polyline(
-            polylineId: PolylineId('custom-polyline'),
-            points: <LatLng>[
-              LatLng(24.248005761996964, 89.92045372724533),
-              LatLng(24.240005761996964, 89.91045372724533),
-              LatLng(24.24123286823403, 89.92040444165468)
-            ],
-            width: 4,
-            color: Colors.white,
-            jointType: JointType.round
-          ),
-        },
-        circles: <Circle>{
-          Circle(
-              circleId: CircleId('custom-circle'),
-              center: LatLng(24.240005761996964, 89.91045372724533),
-              radius: 250,
-              strokeColor: Colors.amber,
-              fillColor: Colors.amber.withOpacity(0.25)
-          )
-        },
-        polygons: <Polygon>{
-          Polygon(
-            polygonId: PolygonId('custom-polygon'),
-            points: <LatLng>[
-              LatLng(24.248005761996964, 89.92045372724533),
-              LatLng(24.244885476089948, 89.92330022156239),
-              LatLng(24.24123286823403, 89.92040444165468),
-              LatLng(24.240005761996964, 89.91045372724533),
-            ],
-            fillColor: Colors.green,
-            strokeWidth: 20,
-            strokeColor:  Colors.green
-          )
+        onTap: (LatLng? latLng) {
+          print(latLng);
         },
       ),
     );
