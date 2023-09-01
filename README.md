@@ -1,16 +1,17 @@
-# google_maps
-https://pub.dev/packages/google_maps_flutter
+# track_user_movement
 
-- Marker
-- Polyline
-- Polygon
-- Circle
-  <img src="https://github.com/nbakh16/google_maps_flutter/assets/38786346/2b9fc217-5e72-4b58-8603-8887349b1f7c" alt="screenshot04" width="250">
+#### package used:
+- https://pub.dev/packages/google_maps_flutter
+- https://pub.dev/packages/location
 
-# user_location
-https://pub.dev/packages/location
-
-- Ask Location permission
+#### features
 - Current Location
-- Track Location
-- Location settings
+- Draw polyline as character moves, every 10 seconds
+- Update Marker location according to the user location
+- Option to follow user
+
+
+<img src="https://github.com/nbakh16/google_maps_flutter/assets/38786346/af989bdb-c956-41f5-85de-2072a9463f8c" alt="screenshot01" width="250">
+
+<img src="https://github.com/nbakh16/google_maps_flutter/assets/38786346/9a54f29d-0812-4afe-a7b3-c5bda3eb5838" alt="screenshot02" width="250">
+
