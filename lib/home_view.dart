@@ -1,3 +1,4 @@
+import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
@@ -15,10 +16,13 @@ class _HomeViewState extends State<HomeView> {
 
   final Location _location = Location();
   LatLng? _currentLocation;
+  StreamSubscription? _streamLocation;
 
   late Marker _marker;
   final List<LatLng> _latLngList = [];
   final Set<Polyline> _polyLineSet = {};
+
+  bool isFollowing = true;
 
   @override
   void initState() {
@@ -33,18 +37,23 @@ class _HomeViewState extends State<HomeView> {
       if(value == PermissionStatus.granted) {
         _location.changeSettings(interval: 10000);
 
-        _location.onLocationChanged.listen((LocationData locationData) {
-          _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
+        _streamLocation = _location.onLocationChanged.listen((LocationData locationData) {
+          setState(() {
+            _currentLocation = LatLng(locationData.latitude!, locationData.longitude!);
 
-          _updateMarker();
-          _updatePolyline();
-          setState(() {});
+            updateMarker();
+            updatePolyline();
+
+            if(isFollowing) {
+              _googleMapController.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
+            }
+          });
         });
       }
     });
   }
 
-  void _updateMarker() {
+  void updateMarker() {
     _marker = Marker(
       markerId: const MarkerId('current_location'),
       position: _currentLocation!,
@@ -59,7 +68,7 @@ class _HomeViewState extends State<HomeView> {
     );
   }
 
-  void _updatePolyline() {
+  void updatePolyline() {
     _latLngList.add(_currentLocation!);
     _polyLineSet.add(Polyline(
       polylineId: const PolylineId('polyline_list'),
@@ -73,23 +82,50 @@ class _HomeViewState extends State<HomeView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Map'),),
-      body: GoogleMap(
-        onMapCreated: (GoogleMapController controller) {
-          _googleMapController = controller;
-          _googleMapController.animateCamera(CameraUpdate.newLatLng(_currentLocation!));
-        },
-        initialCameraPosition: CameraPosition(
-            zoom: 15,
+      body: _currentLocation == null ? loadingAndRefresh()
+      : GoogleMap(
+          onMapCreated: (GoogleMapController controller) {
+            _googleMapController = controller;
+          },
+          initialCameraPosition: CameraPosition(
+            zoom: 14,
             target: _currentLocation!
-        ),
-        markers: {_marker},
-        polylines: _polyLineSet,
-        myLocationEnabled: true,
-        myLocationButtonEnabled: true,
-        onTap: (LatLng? latLng) {
-          print(latLng);
+          ),
+          markers: {_marker},
+          polylines: _polyLineSet,
+          myLocationEnabled: true,
+          myLocationButtonEnabled: true,
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: (){
+          isFollowing = !isFollowing;
         },
+        label: const Text('Follow Me'),
+        backgroundColor: isFollowing ? Colors.lightGreen : Colors.blueGrey,
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Center loadingAndRefresh() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          const CircularProgressIndicator(),
+          ElevatedButton(onPressed: (){
+            setState(() {
+              listenToCurrentLocation();
+            });
+          }, child: const Text('Refresh'))
+        ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _streamLocation?.cancel();
+    super.dispose();
   }
 }
